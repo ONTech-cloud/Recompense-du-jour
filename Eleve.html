@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Question du jour</title>
+</head>
+<body>
+  <h1>Bienvenue</h1>
+  <select id="childSelect">
+    <option value="">-- Choisis ton profil --</option>
+    <option value="Amir">Amir</option>
+    <option value="Youssef">Youssef</option>
+  </select>
+
+  <div id="questionBox" style="display:none;">
+    <p id="questionText"></p>
+    <input type="text" id="answerInput">
+    <button id="submitAnswer">Répondre</button>
+  </div>
+
+  <div id="resultBox" style="display:none;">
+    <h2 id="resultMessage"></h2>
+    <button id="spinButton">🎡 Faire tourner la roulette</button>
+    <p id="rouletteResult"></p>
+  </div>
+
+  <script type="module">
+    import { db } from "./firebase.js";
+    import { doc, getDoc, setDoc, collection, getDocs } 
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const childSelect = document.getElementById("childSelect");
+    const questionBox = document.getElementById("questionBox");
+    const resultBox = document.getElementById("resultBox");
+
+    let currentChild = null;
+    let questionData = null;
+
+    childSelect.addEventListener("change", async () => {
+      currentChild = childSelect.value;
+      if (!currentChild) return;
+
+      // Vérifier si déjà répondu
+      const today = new Date().toISOString().split("T")[0];
+      const respDoc = await getDoc(doc(db, "responses", `${currentChild}_${today}`));
+      if (respDoc.exists()) {
+        alert("Tu as déjà joué aujourd'hui !");
+        return;
+      }
+
+      // Charger question
+      const qDoc = await getDoc(doc(db, "settings", "question"));
+      if (qDoc.exists()) {
+        questionData = qDoc.data();
+        document.getElementById("questionText").textContent = questionData.question;
+        questionBox.style.display = "block";
+      } else {
+        alert("Pas de question pour aujourd'hui !");
+      }
+    });
+
+    document.getElementById("submitAnswer").addEventListener("click", async () => {
+      const answer = document.getElementById("answerInput").value.trim();
+
+      let correct = false;
+      if (questionData.type === "oui_non") {
+        correct = questionData.answers.includes(answer.toLowerCase());
+      } else if (questionData.type === "phrase") {
+        correct = questionData.answers.some(a => a.toLowerCase() === answer.toLowerCase());
+      } else if (questionData.type === "nombre") {
+        correct = questionData.answers.includes(answer);
+      }
+
+      if (correct) {
+        await setDoc(doc(db, "responses", `${currentChild}_${new Date().toISOString().split("T")[0]}`), {
+          child: currentChild,
+          answer: answer,
+          date: new Date().toISOString()
+        });
+        questionBox.style.display = "none";
+        resultBox.style.display = "block";
+        document.getElementById("resultMessage").textContent = "🎉 Bravo ! Tu as réussi !";
+      } else {
+        alert("Mauvaise réponse, essaie encore demain !");
+      }
+    });
+
+    document.getElementById("spinButton").addEventListener("click", async () => {
+      const snap = await getDocs(collection(db, "surprises"));
+      const surprises = [];
+      snap.forEach(d => surprises.push(d.data().text));
+
+      if (surprises.length === 0) {
+        document.getElementById("rouletteResult").textContent = "Pas de surprises définies.";
+        return;
+      }
+
+      const choice = surprises[Math.floor(Math.random() * surprises.length)];
+      document.getElementById("rouletteResult").textContent = "🎁 Surprise : " + choice;
+    });
+  </script>
+</body>
+</html>
