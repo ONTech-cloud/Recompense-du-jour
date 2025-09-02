@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Question du jour</title>
+</head>
+<body>
+  <h1>Administration</h1>
+
+  <h2>Définir la question du jour</h2>
+  <form id="questionForm">
+    <label>Question :</label><br>
+    <input type="text" id="question" required><br><br>
+
+    <label>Type :</label>
+    <select id="type">
+      <option value="oui_non">Oui / Non</option>
+      <option value="phrase">Phrase exacte</option>
+      <option value="nombre">Nombre</option>
+    </select><br><br>
+
+    <label>Réponses acceptées (séparées par ;) :</label><br>
+    <input type="text" id="answers"><br><br>
+
+    <button type="submit">Enregistrer</button>
+  </form>
+
+  <h2>Modifier les surprises de la roulette</h2>
+  <form id="surpriseForm">
+    <input type="text" id="newSurprise" placeholder="Nouvelle surprise">
+    <button type="submit">Ajouter</button>
+  </form>
+
+  <ul id="surpriseList"></ul>
+
+  <script type="module">
+    import { db } from "./firebase.js";
+    import { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc } 
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Sauvegarder question
+    document.getElementById("questionForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const q = document.getElementById("question").value;
+      const type = document.getElementById("type").value;
+      const answers = document.getElementById("answers").value.split(";").map(a => a.trim());
+
+      await setDoc(doc(db, "settings", "question"), {
+        question: q,
+        type: type,
+        answers: answers,
+        date: new Date().toISOString().split("T")[0]
+      });
+
+      alert("Question du jour enregistrée !");
+    });
+
+    // Ajouter une surprise
+    document.getElementById("surpriseForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const s = document.getElementById("newSurprise").value;
+      if (!s) return;
+      await addDoc(collection(db, "surprises"), { text: s });
+      location.reload();
+    });
+
+    // Charger surprises
+    async function loadSurprises() {
+      const snap = await getDocs(collection(db, "surprises"));
+      const list = document.getElementById("surpriseList");
+      list.innerHTML = "";
+      snap.forEach(docu => {
+        const li = document.createElement("li");
+        li.textContent = docu.data().text;
+        list.appendChild(li);
+      });
+    }
+    loadSurprises();
+  </script>
+</body>
+</html>
