@@ -2,80 +2,250 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Admin - Question du jour</title>
+  <title>Administration</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: #f3f7fc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 20px;
+      color: #333;
+    }
+
+    /* Barre de progression */
+    .progress-container {
+      position: relative;
+      width: 80%;
+      height: 20px;
+      background: #dfe9f3;
+      border-radius: 50px;
+      overflow: hidden;
+      margin: 20px auto;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #4facfe, #00f2fe);
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      transition: width 0.6s ease;
+    }
+
+    .progress-bar::after {
+      content: "●";
+      color: white;
+      font-size: 14px;
+      margin-right: 10px;
+      animation: bubble 1s infinite alternate;
+    }
+
+    @keyframes bubble {
+      from { transform: translateY(0); }
+      to { transform: translateY(-6px); }
+    }
+
+    /* Écrans étapes */
+    .step {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    .step.active {
+      display: flex;
+    }
+
+    .choice-container {
+      display: flex;
+      width: 100%;
+      height: 60vh;
+    }
+
+    .split {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.5s;
+      color: white;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .split span {
+      padding: 20px 40px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 40px;
+      transition: 0.3s;
+    }
+
+    .split:hover span {
+      background: rgba(255,255,255,0.4);
+      transform: scale(1.1);
+    }
+
+    .left { background: linear-gradient(135deg, #6a11cb, #2575fc); }
+    .right { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
+
+    select, input, button {
+      margin: 15px;
+      padding: 15px;
+      border: none;
+      border-radius: 15px;
+      font-size: 1.1rem;
+      width: 80%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    button {
+      background: linear-gradient(90deg, #4facfe, #00f2fe);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      filter: brightness(1.1);
+    }
+
+    /* Roulette simplifiée (démo) */
+    .roulette {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 20px;
+    }
+    .roulette div {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 15px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    }
+  </style>
 </head>
 <body>
-  <h1>Administration</h1>
 
-  <h2>Définir la question du jour</h2>
-  <form id="questionForm">
-    <label>Question :</label><br>
-    <input type="text" id="question" required><br><br>
+  <h1>⚙️ Administration</h1>
 
-    <label>Type :</label>
-    <select id="type">
+  <div class="progress-container">
+    <div class="progress-bar" id="progress"></div>
+  </div>
+
+  <!-- Étape 0 : Choisir l’enfant -->
+  <div class="step active" id="step0">
+    <h2>Étape 1 : Choisis l’enfant</h2>
+    <div class="choice-container">
+      <div class="split left" onclick="chooseChild('Amir')"><span>👦 Amir</span></div>
+      <div class="split right" onclick="chooseChild('Youssef')"><span>🧒 Youssef</span></div>
+    </div>
+  </div>
+
+  <!-- Étape 1 : Type de question -->
+  <div class="step" id="step1">
+    <h2>Étape 2 : Sélectionne le type de question</h2>
+    <select id="qType">
       <option value="oui_non">Oui / Non</option>
       <option value="phrase">Phrase exacte</option>
       <option value="nombre">Nombre</option>
-    </select><br><br>
+    </select>
+    <button onclick="nextStep()">Suivant</button>
+  </div>
 
-    <label>Réponses acceptées (séparées par ;) :</label><br>
-    <input type="text" id="answers"><br><br>
+  <!-- Étape 2 : Question et réponse -->
+  <div class="step" id="step2">
+    <h2>Étape 3 : Rédige la question</h2>
+    <input type="text" id="question" placeholder="Écris la question ici">
+    <input type="text" id="answer" placeholder="Réponse correcte">
+    <button onclick="nextStep()">Suivant</button>
+  </div>
 
-    <button type="submit">Enregistrer</button>
-  </form>
+  <!-- Étape 3 : Roulette -->
+  <div class="step" id="step3">
+    <h2>Étape 4 : Modifier la roulette</h2>
+    <div class="roulette" id="roulette"></div>
+    <button onclick="nextStep()">Terminer</button>
+  </div>
 
-  <h2>Modifier les surprises de la roulette</h2>
-  <form id="surpriseForm">
-    <input type="text" id="newSurprise" placeholder="Nouvelle surprise">
-    <button type="submit">Ajouter</button>
-  </form>
+  <!-- Popup édition -->
+  <div class="popup" id="popup">
+    <h3>Modifier la surprise</h3>
+    <input type="text" id="newValue" placeholder="Nouvelle valeur">
+    <button onclick="saveChange()">OK</button>
+  </div>
 
-  <ul id="surpriseList"></ul>
+  <script>
+    let currentStep = 0;
+    let selectedChild = null;
+    let editingCell = null;
 
-  <script type="module">
-    import { db } from "./firebase.js";
-    import { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc } 
-      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    // Sauvegarder question
-    document.getElementById("questionForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const q = document.getElementById("question").value;
-      const type = document.getElementById("type").value;
-      const answers = document.getElementById("answers").value.split(";").map(a => a.trim());
-
-      await setDoc(doc(db, "settings", "question"), {
-        question: q,
-        type: type,
-        answers: answers,
-        date: new Date().toISOString().split("T")[0]
-      });
-
-      alert("Question du jour enregistrée !");
-    });
-
-    // Ajouter une surprise
-    document.getElementById("surpriseForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const s = document.getElementById("newSurprise").value;
-      if (!s) return;
-      await addDoc(collection(db, "surprises"), { text: s });
-      location.reload();
-    });
-
-    // Charger surprises
-    async function loadSurprises() {
-      const snap = await getDocs(collection(db, "surprises"));
-      const list = document.getElementById("surpriseList");
-      list.innerHTML = "";
-      snap.forEach(docu => {
-        const li = document.createElement("li");
-        li.textContent = docu.data().text;
-        list.appendChild(li);
-      });
+    function updateProgress() {
+      const bar = document.getElementById("progress");
+      bar.style.width = ((currentStep+1)/4)*100 + "%";
     }
-    loadSurprises();
+
+    function nextStep() {
+      document.getElementById("step"+currentStep).classList.remove("active");
+      currentStep++;
+      document.getElementById("step"+currentStep).classList.add("active");
+      updateProgress();
+    }
+
+    function chooseChild(name) {
+      selectedChild = name;
+      nextStep();
+    }
+
+    // Roulette de démo avec 10 cases
+    const colors = ["#ff416c","#ff4b2b","#2575fc","#6a11cb","#00c9ff","#92fe9d","#f7971e","#ffd200","#00f2fe","#4facfe"];
+    const rouletteDiv = document.getElementById("roulette");
+    colors.forEach((c,i) => {
+      let d = document.createElement("div");
+      d.style.background = c;
+      d.textContent = "🎁 " + (i+1);
+      d.onclick = () => editCell(d);
+      rouletteDiv.appendChild(d);
+    });
+
+    function editCell(cell) {
+      editingCell = cell;
+      document.getElementById("popup").style.display = "block";
+    }
+    function saveChange() {
+      let val = document.getElementById("newValue").value;
+      if(val) editingCell.textContent = val;
+      document.getElementById("popup").style.display = "none";
+    }
+
+    updateProgress();
   </script>
 </body>
 </html>
