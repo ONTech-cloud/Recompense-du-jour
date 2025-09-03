@@ -89,7 +89,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, query, where, orderBy, limit, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Config Firebase
 const firebaseConfig = {
@@ -107,7 +107,7 @@ const db = getFirestore(app);
 let currentQuestion = null;
 let eleve = null;
 
-// Sélection du profil avec addEventListener
+// Boutons profils
 document.getElementById("amirBtn").addEventListener("click", () => selectProfile("Amir"));
 document.getElementById("youssefBtn").addEventListener("click", () => selectProfile("Youssef"));
 
@@ -118,6 +118,7 @@ function selectProfile(profil) {
   loadQuestion();
 }
 
+// Charger la dernière question pour l'élève (sans index)
 async function loadQuestion() {
   eleve = sessionStorage.getItem("eleve");
   if (!eleve) {
@@ -127,20 +128,19 @@ async function loadQuestion() {
   }
 
   try {
-    const q = query(
-      collection(db, "questions"),
-      where("eleve", "==", eleve),
-      orderBy("createdAt", "desc"),
-      limit(1)
-    );
-
-    const snap = await getDocs(q);
+    const snap = await getDocs(collection(db, "questions"));
     if (snap.empty) {
       document.getElementById("log").innerText = "⚠️ Aucune question trouvée pour " + eleve;
       return;
     }
-
-    currentQuestion = snap.docs[0].data();
+    // Filtrer côté JS pour l'élève et prendre la dernière par createdAt
+    const docsEleve = snap.docs.filter(d => d.data().eleve === eleve);
+    if(docsEleve.length === 0) {
+      document.getElementById("log").innerText = "⚠️ Aucune question pour " + eleve;
+      return;
+    }
+    docsEleve.sort((a,b) => (a.data().createdAt?.seconds || 0) - (b.data().createdAt?.seconds || 0));
+    currentQuestion = docsEleve[docsEleve.length-1].data();
     showQuestion();
   } catch(e) {
     document.getElementById("log").innerText = "Erreur Firebase: " + e.message;
@@ -165,7 +165,7 @@ function showQuestion() {
   }
 }
 
-// Validation de la réponse
+// Validation
 document.getElementById("submitBtn").addEventListener("click", () => {
   const answer = document.getElementById("answerInput").value.trim().toLowerCase();
   const correct = currentQuestion.bonneReponse.trim().toLowerCase();
@@ -182,7 +182,7 @@ document.getElementById("submitBtn").addEventListener("click", () => {
   }
 });
 
-// Roulette de la surprise
+// Roulette animée
 function startRoulette() {
   const rouletteDiv = document.getElementById("roulette");
   const surprises = ["🎁 Chocolat", "🍎 Pomme", "🍌 Banane", "🍭 Bonbon", "🎨 Crayons", "📚 Mini-livre", "🎲 Mini-jeu", "🖍️ Feutres", "🎵 Sonnerie", "🏅 Sticker"];
