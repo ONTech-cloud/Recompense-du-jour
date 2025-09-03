@@ -12,11 +12,7 @@
       flex-direction: column;
       align-items: center;
     }
-
-    h1 {
-      margin: 20px;
-      color: #333;
-    }
+    h1 { margin: 20px; color: #333; }
 
     /* Barre de progression */
     .progress-container {
@@ -28,7 +24,6 @@
       overflow: hidden;
       margin: 20px auto;
     }
-
     .progress-bar {
       height: 100%;
       width: 0;
@@ -39,7 +34,6 @@
       justify-content: flex-end;
       transition: width 0.6s ease;
     }
-
     .progress-bar::after {
       content: "●";
       color: white;
@@ -47,7 +41,6 @@
       margin-right: 10px;
       animation: bubble 1s infinite alternate;
     }
-
     @keyframes bubble {
       from { transform: translateY(0); }
       to { transform: translateY(-6px); }
@@ -62,17 +55,13 @@
       max-width: 600px;
       text-align: center;
     }
-
-    .step.active {
-      display: flex;
-    }
+    .step.active { display: flex; }
 
     .choice-container {
       display: flex;
       width: 100%;
       height: 60vh;
     }
-
     .split {
       flex: 1;
       display: flex;
@@ -84,19 +73,16 @@
       font-size: 2rem;
       font-weight: bold;
     }
-
     .split span {
       padding: 20px 40px;
       background: rgba(255,255,255,0.25);
       border-radius: 40px;
       transition: 0.3s;
     }
-
     .split:hover span {
       background: rgba(255,255,255,0.4);
       transform: scale(1.1);
     }
-
     .left { background: linear-gradient(135deg, #6a11cb, #2575fc); }
     .right { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
 
@@ -109,7 +95,6 @@
       width: 80%;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-
     button {
       background: linear-gradient(90deg, #4facfe, #00f2fe);
       color: white;
@@ -117,11 +102,7 @@
       cursor: pointer;
       transition: 0.3s;
     }
-
-    button:hover {
-      transform: scale(1.05);
-      filter: brightness(1.1);
-    }
+    button:hover { transform: scale(1.05); filter: brightness(1.1); }
 
     /* Roulette simplifiée (démo) */
     .roulette {
@@ -139,6 +120,9 @@
       color: white;
       cursor: pointer;
       font-weight: bold;
+      user-select: none;
+      padding: 0 8px;
+      text-align: center;
     }
     .popup {
       display: none;
@@ -149,6 +133,7 @@
       padding: 20px;
       border-radius: 20px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      width: min(90vw, 420px);
     }
   </style>
 </head>
@@ -184,7 +169,7 @@
   <div class="step" id="step2">
     <h2>Étape 3 : Rédige la question</h2>
     <input type="text" id="question" placeholder="Écris la question ici">
-    <input type="text" id="answer" placeholder="Réponse correcte">
+    <input type="text" id="answer" placeholder="Réponse correcte (ex: oui / mot / 12)">
     <button onclick="nextStep()">Suivant</button>
   </div>
 
@@ -202,6 +187,7 @@
     <button onclick="saveChange()">OK</button>
   </div>
 
+  <!-- Script ORIGINAL (inchangé côté UI), juste complété pour déclencher la sauvegarde au dernier clic -->
   <script>
     let currentStep = 0;
     let selectedChild = null;
@@ -213,6 +199,11 @@
     }
 
     function nextStep() {
+      // 🔗 Au dernier écran ("Terminer"), on enregistre dans Firebase puis on stoppe le wizard.
+      if (currentStep === 3) {
+        saveAll(); // défini plus bas
+        return;
+      }
       document.getElementById("step"+currentStep).classList.remove("active");
       currentStep++;
       document.getElementById("step"+currentStep).classList.add("active");
@@ -224,7 +215,7 @@
       nextStep();
     }
 
-    // Roulette de démo avec 10 cases
+    // Roulette : 10 cases colorées cliquables (édition par popup)
     const colors = ["#ff416c","#ff4b2b","#2575fc","#6a11cb","#00c9ff","#92fe9d","#f7971e","#ffd200","#00f2fe","#4facfe"];
     const rouletteDiv = document.getElementById("roulette");
     colors.forEach((c,i) => {
@@ -237,15 +228,94 @@
 
     function editCell(cell) {
       editingCell = cell;
+      document.getElementById("newValue").value = cell.textContent;
       document.getElementById("popup").style.display = "block";
     }
     function saveChange() {
-      let val = document.getElementById("newValue").value;
+      let val = document.getElementById("newValue").value.trim();
       if(val) editingCell.textContent = val;
       document.getElementById("popup").style.display = "none";
     }
 
     updateProgress();
+
+    // 👉 Collecte les valeurs de la page et appelle la sauvegarde Firebase exposée par le module
+    async function saveAll() {
+      if (!selectedChild) { alert("Choisis l’enfant d’abord."); return; }
+      const type = document.getElementById("qType").value;
+      const q = document.getElementById("question").value.trim();
+      const a = document.getElementById("answer").value.trim();
+
+      if (!q || !a) { alert("Remplis la question et la réponse."); return; }
+
+      // Surprises depuis la grille
+      const items = Array.from(rouletteDiv.children).map(el => el.textContent.trim()).slice(0,10);
+
+      const payload = {
+        selectedChild,
+        type,
+        question: q,
+        // On stocke la/les réponses en minuscule pour faciliter la comparaison côté élève
+        answers: [a.toLowerCase()],
+        date: new Date().toISOString().split("T")[0],
+        surprises: items
+      };
+
+      try {
+        if (!window.saveToFirestore) {
+          alert("Firebase non initialisé.");
+          return;
+        }
+        await window.saveToFirestore(payload);
+        alert("✅ Enregistré pour " + selectedChild + " !");
+        // Reset simple vers l’étape 0
+        document.getElementById("step"+currentStep).classList.remove("active");
+        currentStep = 0;
+        document.getElementById("step0").classList.add("active");
+        updateProgress();
+      } catch (e) {
+        console.error(e);
+        alert("Erreur d’enregistrement Firebase.");
+      }
+    }
+  </script>
+
+  <!-- Module qui initialise Firebase + Firestore et expose la sauvegarde (sans toucher à l’UI) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // ⚙️ Config de TON projet
+    const firebaseConfig = {
+      apiKey: "AIzaSyAUzLQK-ueXOslGncKrmqAXpwFtisMdyGI",
+      authDomain: "recompense-du-jour.firebaseapp.com",
+      projectId: "recompense-du-jour",
+      storageBucket: "recompense-du-jour.firebasestorage.app",
+      messagingSenderId: "67482964719",
+      appId: "1:67482964719:web:0c735a559493b1d4ae011a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Sauvegarde question + surprises
+    async function saveToFirestore({ selectedChild, type, question, answers, date, surprises }) {
+      // questions/{Amir|Youssef}
+      await setDoc(
+        doc(db, "questions", selectedChild),
+        { type, question, answers, date, updatedAt: Date.now() },
+        { merge: true }
+      );
+      // surprises/{Amir|Youssef}
+      await setDoc(
+        doc(db, "surprises", selectedChild),
+        { items: surprises, updatedAt: Date.now() },
+        { merge: true }
+      );
+    }
+
+    // Expose au script non-module sans changer l’UI
+    window.saveToFirestore = saveToFirestore;
   </script>
 </body>
 </html>
