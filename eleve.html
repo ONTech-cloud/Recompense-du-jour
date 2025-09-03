@@ -89,7 +89,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Config Firebase
 const firebaseConfig = {
@@ -118,7 +118,7 @@ function selectProfile(profil) {
   loadQuestion();
 }
 
-// Charger la dernière question pour l'élève (sans index)
+// Charger la dernière question pour l'élève
 async function loadQuestion() {
   eleve = sessionStorage.getItem("eleve");
   if (!eleve) {
@@ -130,18 +130,34 @@ async function loadQuestion() {
   try {
     const snap = await getDocs(collection(db, "questions"));
     if (snap.empty) {
-      document.getElementById("log").innerText = "⚠️ Aucune question trouvée pour " + eleve;
+      document.getElementById("log").innerText = "⚠️ Aucune question trouvée";
       return;
     }
-    // Filtrer côté JS pour l'élève et prendre la dernière par createdAt
-    const docsEleve = snap.docs.filter(d => d.data().eleve === eleve);
+
+    // Filtrer côté JS pour le profil (nom du doc)
+    const docsEleve = snap.docs.filter(d => d.id === eleve);
     if(docsEleve.length === 0) {
       document.getElementById("log").innerText = "⚠️ Aucune question pour " + eleve;
       return;
     }
-    docsEleve.sort((a,b) => (a.data().createdAt?.seconds || 0) - (b.data().createdAt?.seconds || 0));
-    currentQuestion = docsEleve[docsEleve.length-1].data();
+
+    // Trier par updatedAt
+    docsEleve.sort((a,b) => (a.data().updatedAt || 0) - (b.data().updatedAt || 0));
+
+    const d = docsEleve[docsEleve.length-1];
+    const data = d.data();
+
+    currentQuestion = {
+      titre: data.question,
+      texte: data.question,
+      type: data.type === "oui_non" ? "ouiNon" : data.type,
+      bonneReponse: data.answers[0],
+      eleve: d.id,
+      createdAt: data.updatedAt
+    };
+
     showQuestion();
+
   } catch(e) {
     document.getElementById("log").innerText = "Erreur Firebase: " + e.message;
     console.error(e);
