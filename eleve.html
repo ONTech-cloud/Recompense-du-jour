@@ -6,67 +6,118 @@
 <title>Élève - Question du jour</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
-    background: #f0f8ff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(120deg, #e0f7ff, #cceeff);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin:0;
+    justify-content: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding-top: 50px;
   }
+
+  h1 {
+    color: #0077cc;
+    font-size: 2.2em;
+    margin-bottom: 30px;
+  }
+
+  #selection {
+    display: flex;
+    gap: 50px;
+    margin-bottom: 50px;
+  }
+
   .profil-btn {
-    padding: 40px 80px;
-    margin: 20px;
-    font-size: 1.5em;
-    border-radius: 25px;
+    padding: 50px 100px;
+    font-size: 1.7em;
+    border-radius: 40px;
     border: none;
     cursor: pointer;
-    transition: all 0.3s;
-    background: linear-gradient(45deg,#6CC1FF,#3A8DFF);
+    transition: transform 0.3s, box-shadow 0.3s;
+    background: linear-gradient(135deg,#6CC1FF,#3A8DFF);
     color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   }
+
   .profil-btn:hover {
     transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    box-shadow: 0 0 25px rgba(0,0,0,0.35);
   }
+
   .question-box {
-    margin-top: 30px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    background: #ffffffdd;
+    padding: 30px;
+    border-radius: 30px;
     width: 90%;
-    max-width: 600px;
-    padding: 20px;
-    border-radius: 20px;
-    background: #fff;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    max-width: 650px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    animation: fadeIn 0.5s ease-in-out;
   }
-  .answer-input, .answer-btn {
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #questionText {
+    font-size: 1.5em;
+    color: #005fa3;
+    margin-bottom: 25px;
+    text-align: center;
+  }
+
+  .answer-input {
     width: 100%;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 15px;
-    border: 1px solid #ccc;
-    font-size: 1.2em;
+    padding: 18px;
+    font-size: 1.3em;
+    border-radius: 20px;
+    border: 2px solid #3A8DFF;
+    outline: none;
+    transition: border 0.3s, box-shadow 0.3s;
   }
+
+  .answer-input:focus {
+    border-color: #0077cc;
+    box-shadow: 0 0 12px rgba(0,123,255,0.3);
+  }
+
   .answer-btn {
-    background: #3A8DFF;
-    color: white;
+    margin-top: 20px;
+    padding: 18px;
+    width: 100%;
+    font-size: 1.4em;
+    border-radius: 25px;
     border: none;
+    background: #0077cc;
+    color: white;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s;
   }
+
   .answer-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
   }
+
   #roulette {
-    margin-top: 20px;
-    font-size: 1.3em;
+    margin-top: 30px;
+    font-size: 1.4em;
     font-weight: bold;
-    color: #3A8DFF;
+    color: #0077cc;
+    text-align: center;
+    min-height: 50px;
   }
+
   #log {
-    margin-top: 10px;
+    margin-top: 15px;
     color: red;
+    font-weight: bold;
+    text-align: center;
   }
 </style>
 </head>
@@ -78,7 +129,7 @@
   <button id="youssefBtn" class="profil-btn">Youssef</button>
 </div>
 
-<div id="questionSection" class="question-box" style="display:none;">
+<div id="questionSection" class="question-box">
   <div id="questionText"></div>
   <input type="text" id="answerInput" class="answer-input" placeholder="Ta réponse ici">
   <button class="answer-btn" id="submitBtn">Valider</button>
@@ -89,9 +140,9 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Config Firebase
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyAUzLQK-ueXOslGncKrmqAXpwFtisMdyGI",
   authDomain: "recompense-du-jour.firebaseapp.com",
@@ -106,44 +157,36 @@ const db = getFirestore(app);
 
 let currentQuestion = null;
 let eleve = null;
+let surprisesList = [];
 
-// Boutons profils
+// Profil buttons
 document.getElementById("amirBtn").addEventListener("click", () => selectProfile("Amir"));
 document.getElementById("youssefBtn").addEventListener("click", () => selectProfile("Youssef"));
 
-function selectProfile(profil) {
+async function selectProfile(profil) {
   eleve = profil;
   sessionStorage.setItem("eleve", profil);
   document.getElementById("selection").style.display = "none";
-  loadQuestion();
+  await loadQuestion();
+  await loadSurprises();
 }
 
-// Charger la dernière question pour l'élève
 async function loadQuestion() {
   eleve = sessionStorage.getItem("eleve");
   if (!eleve) {
-    alert("Erreur : profil manquant. Retourne à l’accueil.");
-    window.location.reload();
+    alert("Erreur : profil manquant.");
     return;
   }
 
   try {
     const snap = await getDocs(collection(db, "questions"));
-    if (snap.empty) {
-      document.getElementById("log").innerText = "⚠️ Aucune question trouvée";
-      return;
-    }
-
-    // Filtrer côté JS pour le profil (nom du doc)
     const docsEleve = snap.docs.filter(d => d.id === eleve);
     if(docsEleve.length === 0) {
       document.getElementById("log").innerText = "⚠️ Aucune question pour " + eleve;
       return;
     }
 
-    // Trier par updatedAt
     docsEleve.sort((a,b) => (a.data().updatedAt || 0) - (b.data().updatedAt || 0));
-
     const d = docsEleve[docsEleve.length-1];
     const data = d.data();
 
@@ -164,14 +207,26 @@ async function loadQuestion() {
   }
 }
 
+async function loadSurprises() {
+  surprisesList = [];
+  try {
+    const snap = await getDocs(collection(db, "surprises"));
+    snap.docs.forEach(d => {
+      const data = d.data();
+      if(data.nom) surprisesList.push(data.nom);
+    });
+  } catch(e) {
+    console.error("Erreur chargement surprises: ", e);
+  }
+}
+
 function showQuestion() {
-  document.getElementById("questionSection").style.display = "block";
+  document.getElementById("questionSection").style.display = "flex";
   const qDiv = document.getElementById("questionText");
   const input = document.getElementById("answerInput");
   input.value = "";
 
   qDiv.innerHTML = `<strong>${currentQuestion.titre}</strong><br>${currentQuestion.texte}`;
-
   if(currentQuestion.type === "ouiNon") {
     input.placeholder = "Réponds 'oui' ou 'non'";
   } else if(currentQuestion.type === "phrase") {
@@ -198,21 +253,25 @@ document.getElementById("submitBtn").addEventListener("click", () => {
   }
 });
 
-// Roulette animée
+// Roulette animée avec surprises de Firestore
 function startRoulette() {
   const rouletteDiv = document.getElementById("roulette");
-  const surprises = ["🎁 Chocolat", "🍎 Pomme", "🍌 Banane", "🍭 Bonbon", "🎨 Crayons", "📚 Mini-livre", "🎲 Mini-jeu", "🖍️ Feutres", "🎵 Sonnerie", "🏅 Sticker"];
+  if(surprisesList.length === 0) {
+    rouletteDiv.innerText = "🎉 Aucune surprise disponible";
+    return;
+  }
+
   let count = 0;
-  rouletteDiv.innerText = "🎉 Bravo ! La roulette tourne...";
+  rouletteDiv.innerText = "🎉 La roulette tourne...";
 
   const interval = setInterval(() => {
-    rouletteDiv.innerText = "🎉 Surprise : " + surprises[count % surprises.length];
+    rouletteDiv.innerText = "🎉 Surprise : " + surprisesList[count % surprisesList.length];
     count++;
   }, 100);
 
   setTimeout(() => {
     clearInterval(interval);
-    const final = surprises[Math.floor(Math.random()*surprises.length)];
+    const final = surprisesList[Math.floor(Math.random()*surprisesList.length)];
     rouletteDiv.innerText = "🎉 Félicitations ! Ta surprise : " + final;
   }, 2000);
 }
