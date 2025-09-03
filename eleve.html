@@ -71,7 +71,7 @@
     text-align: center;
   }
 
-  .answer-input {
+  .answer-input, .answer-select {
     width: 100%;
     padding: 18px;
     font-size: 1.3em;
@@ -81,7 +81,7 @@
     transition: border 0.3s, box-shadow 0.3s;
   }
 
-  .answer-input:focus {
+  .answer-input:focus, .answer-select:focus {
     border-color: #0077cc;
     box-shadow: 0 0 12px rgba(0,123,255,0.3);
   }
@@ -102,6 +102,27 @@
   .answer-btn:hover {
     transform: scale(1.05);
     box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  }
+
+  .mini-btns {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 15px;
+  }
+
+  .mini-btn {
+    padding: 15px 30px;
+    border-radius: 20px;
+    border: 2px solid #3A8DFF;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .mini-btn.selected {
+    background: #3A8DFF;
+    color: white;
   }
 
   #roulette {
@@ -131,7 +152,12 @@
 
 <div id="questionSection" class="question-box">
   <div id="questionText"></div>
-  <input type="text" id="answerInput" class="answer-input" placeholder="Ta réponse ici">
+  <input type="text" id="answerInput" class="answer-input" placeholder="Ta réponse ici" style="display:none;">
+  <select id="answerSelect" class="answer-select" style="display:none;"></select>
+  <div id="miniBtns" class="mini-btns" style="display:none;">
+    <button class="mini-btn" data-value="oui">Oui</button>
+    <button class="mini-btn" data-value="non">Non</button>
+  </div>
   <button class="answer-btn" id="submitBtn">Valider</button>
   <div id="roulette"></div>
 </div>
@@ -140,7 +166,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase config
 const firebaseConfig = {
@@ -173,18 +199,12 @@ async function selectProfile(profil) {
 
 async function loadQuestion() {
   eleve = sessionStorage.getItem("eleve");
-  if (!eleve) {
-    alert("Erreur : profil manquant.");
-    return;
-  }
+  if (!eleve) { alert("Erreur : profil manquant."); return; }
 
   try {
     const snap = await getDocs(collection(db, "questions"));
     const docsEleve = snap.docs.filter(d => d.id === eleve);
-    if(docsEleve.length === 0) {
-      document.getElementById("log").innerText = "⚠️ Aucune question pour " + eleve;
-      return;
-    }
+    if(docsEleve.length === 0) { document.getElementById("log").innerText = "Aucune question pour " + eleve; return; }
 
     docsEleve.sort((a,b) => (a.data().updatedAt || 0) - (b.data().updatedAt || 0));
     const d = docsEleve[docsEleve.length-1];
@@ -193,7 +213,7 @@ async function loadQuestion() {
     currentQuestion = {
       titre: data.question,
       texte: data.question,
-      type: data.type === "oui_non" ? "ouiNon" : data.type,
+      type: data.type,
       bonneReponse: data.answers[0],
       eleve: d.id,
       createdAt: data.updatedAt
@@ -201,65 +221,70 @@ async function loadQuestion() {
 
     showQuestion();
 
-  } catch(e) {
-    document.getElementById("log").innerText = "Erreur Firebase: " + e.message;
-    console.error(e);
-  }
+  } catch(e) { console.error(e); document.getElementById("log").innerText = "Erreur Firebase: " + e.message; }
 }
 
 async function loadSurprises() {
   surprisesList = [];
   try {
     const snap = await getDocs(collection(db, "surprises"));
-    snap.docs.forEach(d => {
-      const data = d.data();
-      if(data.nom) surprisesList.push(data.nom);
-    });
-  } catch(e) {
-    console.error("Erreur chargement surprises: ", e);
-  }
+    snap.docs.forEach(d => { const data = d.data(); if(data.nom) surprisesList.push(data.nom); });
+  } catch(e) { console.error("Erreur chargement surprises: ", e); }
 }
 
 function showQuestion() {
-  document.getElementById("questionSection").style.display = "flex";
   const qDiv = document.getElementById("questionText");
   const input = document.getElementById("answerInput");
-  input.value = "";
+  const select = document.getElementById("answerSelect");
+  const miniBtnsDiv = document.getElementById("miniBtns");
+
+  input.style.display = "none";
+  select.style.display = "none";
+  miniBtnsDiv.style.display = "none";
 
   qDiv.innerHTML = `<strong>${currentQuestion.titre}</strong><br>${currentQuestion.texte}`;
-  if(currentQuestion.type === "ouiNon") {
-    input.placeholder = "Réponds 'oui' ou 'non'";
+  if(currentQuestion.type === "oui_non") {
+    miniBtnsDiv.style.display = "flex";
+    miniBtnsDiv.querySelectorAll(".mini-btn").forEach(b => b.classList.remove("selected"));
+    miniBtnsDiv.querySelectorAll(".mini-btn").forEach(b => b.onclick = () => {
+      miniBtnsDiv.querySelectorAll(".mini-btn").forEach(btn=>btn.classList.remove("selected"));
+      b.classList.add("selected");
+    });
   } else if(currentQuestion.type === "phrase") {
+    input.style.display = "block";
     input.placeholder = "Écris la phrase exacte";
+    input.value = "";
   } else if(currentQuestion.type === "nombre") {
-    input.placeholder = "Écris le nombre correct";
+    select.style.display = "block";
+    select.innerHTML = "";
+    for(let i=0;i<=100;i++) select.innerHTML += `<option value="${i}">${i}</option>`;
   }
 }
 
 // Validation
 document.getElementById("submitBtn").addEventListener("click", () => {
-  const answer = document.getElementById("answerInput").value.trim().toLowerCase();
-  const correct = currentQuestion.bonneReponse.trim().toLowerCase();
-
-  if(answer === "") {
-    alert("Merci de répondre !");
-    return;
+  let answer;
+  if(currentQuestion.type==="oui_non"){
+    const selected = document.querySelector(".mini-btn.selected");
+    if(!selected){ alert("Sélectionne Oui ou Non"); return; }
+    answer = selected.dataset.value;
+  } else if(currentQuestion.type==="phrase"){
+    answer = document.getElementById("answerInput").value.trim();
+  } else if(currentQuestion.type==="nombre"){
+    answer = document.getElementById("answerSelect").value;
   }
 
-  if(answer === correct) {
+  if(answer.trim().toLowerCase() === currentQuestion.bonneReponse.trim().toLowerCase()) {
     startRoulette();
   } else {
     alert("❌ Ce n'est pas la bonne réponse. Essaie encore !");
   }
 });
 
-// Roulette animée avec surprises de Firestore
+// Roulette animée
 function startRoulette() {
   const rouletteDiv = document.getElementById("roulette");
-  if(surprisesList.length === 0) {
-    rouletteDiv.innerText = "🎉 Aucune surprise disponible";
-    return;
-  }
+  if(surprisesList.length === 0) { rouletteDiv.innerText = "🎉 Aucune surprise disponible"; return; }
 
   let count = 0;
   rouletteDiv.innerText = "🎉 La roulette tourne...";
