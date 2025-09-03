@@ -5,37 +5,93 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Élève - Question du jour</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #f0f8ff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin:0; }
-  .profil-btn { padding: 40px 80px; margin: 20px; font-size: 1.5em; border-radius: 25px; border: none; cursor: pointer; transition: all 0.3s; background: linear-gradient(45deg,#6CC1FF,#3A8DFF); color: white; }
-  .profil-btn:hover { transform: scale(1.1); box-shadow: 0 0 20px rgba(0,0,0,0.3); }
-  .question-box { margin-top: 30px; width: 90%; max-width: 600px; padding: 20px; border-radius: 20px; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-  .answer-input, .answer-btn { width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px; border: 1px solid #ccc; font-size: 1.2em; }
-  .answer-btn { background: #3A8DFF; color: white; border: none; cursor: pointer; transition: all 0.3s; }
-  .answer-btn:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(0,0,0,0.2); }
-  #roulette { margin-top: 20px; font-size: 1.3em; font-weight: bold; color: #3A8DFF; }
+  body {
+    font-family: Arial, sans-serif;
+    background: #f0f8ff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin:0;
+  }
+  .profil-btn {
+    padding: 40px 80px;
+    margin: 20px;
+    font-size: 1.5em;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: linear-gradient(45deg,#6CC1FF,#3A8DFF);
+    color: white;
+  }
+  .profil-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  }
+  .question-box {
+    margin-top: 30px;
+    width: 90%;
+    max-width: 600px;
+    padding: 20px;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  }
+  .answer-input, .answer-btn {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 15px;
+    border: 1px solid #ccc;
+    font-size: 1.2em;
+  }
+  .answer-btn {
+    background: #3A8DFF;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .answer-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  }
+  #roulette {
+    margin-top: 20px;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #3A8DFF;
+  }
+  #log {
+    margin-top: 10px;
+    color: red;
+  }
 </style>
 </head>
 <body>
 
 <h1>Choisis ton profil</h1>
 <div id="selection">
-  <button class="profil-btn" onclick="selectProfile('Amir')">Amir</button>
-  <button class="profil-btn" onclick="selectProfile('Youssef')">Youssef</button>
+  <button id="amirBtn" class="profil-btn">Amir</button>
+  <button id="youssefBtn" class="profil-btn">Youssef</button>
 </div>
 
 <div id="questionSection" class="question-box" style="display:none;">
   <div id="questionText"></div>
   <input type="text" id="answerInput" class="answer-input" placeholder="Ta réponse ici">
-  <button class="answer-btn" onclick="submitAnswer()">Valider</button>
+  <button class="answer-btn" id="submitBtn">Valider</button>
   <div id="roulette"></div>
 </div>
 
-<div id="log" style="margin-top:10px; color:red;"></div>
+<div id="log"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, query, where, orderBy, limit, getDocs, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, query, where, orderBy, limit, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAUzLQK-ueXOslGncKrmqAXpwFtisMdyGI",
   authDomain: "recompense-du-jour.firebaseapp.com",
@@ -50,6 +106,10 @@ const db = getFirestore(app);
 
 let currentQuestion = null;
 let eleve = null;
+
+// Sélection du profil avec addEventListener
+document.getElementById("amirBtn").addEventListener("click", () => selectProfile("Amir"));
+document.getElementById("youssefBtn").addEventListener("click", () => selectProfile("Youssef"));
 
 function selectProfile(profil) {
   eleve = profil;
@@ -105,7 +165,8 @@ function showQuestion() {
   }
 }
 
-function submitAnswer() {
+// Validation de la réponse
+document.getElementById("submitBtn").addEventListener("click", () => {
   const answer = document.getElementById("answerInput").value.trim().toLowerCase();
   const correct = currentQuestion.bonneReponse.trim().toLowerCase();
 
@@ -119,8 +180,9 @@ function submitAnswer() {
   } else {
     alert("❌ Ce n'est pas la bonne réponse. Essaie encore !");
   }
-}
+});
 
+// Roulette de la surprise
 function startRoulette() {
   const rouletteDiv = document.getElementById("roulette");
   const surprises = ["🎁 Chocolat", "🍎 Pomme", "🍌 Banane", "🍭 Bonbon", "🎨 Crayons", "📚 Mini-livre", "🎲 Mini-jeu", "🖍️ Feutres", "🎵 Sonnerie", "🏅 Sticker"];
