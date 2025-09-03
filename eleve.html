@@ -1,333 +1,144 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Question du jour</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #eef3ff, #f9fbff);
-      color: #222;
-    }
-    .wrap {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-    .card {
-      background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-      padding: 24px;
-      margin-top: 16px;
-    }
-    .title {
-      font-weight: 700;
-      font-size: 1.6rem;
-      margin: 0;
-    }
-    .subtitle {
-      opacity: .7;
-      margin-top: 6px;
-    }
-
-    .answer-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 18px;
-      flex-wrap: wrap;
-    }
-    .btn, .input {
-      border: none;
-      border-radius: 14px;
-      padding: 14px 18px;
-      font-size: 1.05rem;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    }
-    .btn {
-      background: linear-gradient(90deg, #4facfe, #00f2fe);
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform .15s ease, filter .15s ease;
-    }
-    .btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
-    .btn.alt { background: linear-gradient(90deg, #ff416c, #ff4b2b); }
-    .btn.gray { background: #e9eef7; color: #2a2f3a; }
-    .input {
-      width: 100%;
-      outline: none;
-      background: #f4f7fc;
-    }
-
-    /* Roulette */
-    .center { text-align: center; }
-    .wheel-wrap { margin-top: 22px; }
-    .wheel {
-      width: 320px; height: 320px; margin: 0 auto;
-      border-radius: 50%;
-      border: 10px solid #e6f0ff;
-      background: conic-gradient(#ff416c 0 36deg, #ff4b2b 36deg 72deg, #2575fc 72deg 108deg, #6a11cb 108deg 144deg, #00c9ff 144deg 180deg, #92fe9d 180deg 216deg, #f7971e 216deg 252deg, #ffd200 252deg 288deg, #00f2fe 288deg 324deg, #4facfe 324deg 360deg);
-      position: relative;
-      transition: transform 3.2s cubic-bezier(.2,.9,.2,1);
-      box-shadow: 0 10px 30px rgba(0,0,0,.08) inset, 0 10px 25px rgba(0,0,0,.08);
-    }
-    .pointer {
-      width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent;
-      border-bottom: 18px solid #2575fc;
-      margin: 0 auto 10px auto;
-      filter: drop-shadow(0 3px 4px rgba(0,0,0,.2));
-    }
-    .popup {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.35);
-      align-items: center; justify-content: center;
-      padding: 18px;
-    }
-    .popup .inner {
-      background: white;
-      border-radius: 20px;
-      max-width: 460px;
-      width: 100%;
-      padding: 22px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,.2);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Élève - Question du jour</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f0f8ff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin:0; }
+  .profil-btn { padding: 40px 80px; margin: 20px; font-size: 1.5em; border-radius: 25px; border: none; cursor: pointer; transition: all 0.3s; background: linear-gradient(45deg,#6CC1FF,#3A8DFF); color: white; }
+  .profil-btn:hover { transform: scale(1.1); box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+  .question-box { margin-top: 30px; width: 90%; max-width: 600px; padding: 20px; border-radius: 20px; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+  .answer-input, .answer-btn { width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px; border: 1px solid #ccc; font-size: 1.2em; }
+  .answer-btn { background: #3A8DFF; color: white; border: none; cursor: pointer; transition: all 0.3s; }
+  .answer-btn:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+  #roulette { margin-top: 20px; font-size: 1.3em; font-weight: bold; color: #3A8DFF; }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h2 class="title" id="welcome">Question du jour</h2>
-      <div class="subtitle" id="dateInfo"></div>
-    </div>
 
-    <div class="card" id="questionCard" style="display:none;">
-      <div class="subtitle" id="qTypeLabel"></div>
-      <h3 class="title" id="qText" style="margin-top:8px;"></h3>
+<h1>Choisis ton profil</h1>
+<div id="selection">
+  <button class="profil-btn" onclick="selectProfile('Amir')">Amir</button>
+  <button class="profil-btn" onclick="selectProfile('Youssef')">Youssef</button>
+</div>
 
-      <div id="answerZone" class="answer-row"></div>
+<div id="questionSection" class="question-box" style="display:none;">
+  <div id="questionText"></div>
+  <input type="text" id="answerInput" class="answer-input" placeholder="Ta réponse ici">
+  <button class="answer-btn" onclick="submitAnswer()">Valider</button>
+  <div id="roulette"></div>
+</div>
 
-      <div class="answer-row">
-        <button class="btn" id="validateBtn">Valider</button>
-        <button class="btn gray" id="backBtn" onclick="history.back()">Retour</button>
-      </div>
-    </div>
+<div id="log" style="margin-top:10px; color:red;"></div>
 
-    <div class="card center" id="successCard" style="display:none;">
-      <h3 class="title">🎉 Bravo ! Bonne réponse.</h3>
-      <div class="subtitle">Tourne la roulette pour ta surprise.</div>
-      <div class="wheel-wrap">
-        <div class="pointer"></div>
-        <div class="wheel" id="wheel"></div>
-      </div>
-      <div class="answer-row" style="justify-content:center;">
-        <button class="btn" id="spinBtn">🎡 Tourner</button>
-      </div>
-    </div>
-  </div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, query, where, orderBy, limit, getDocs, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  <!-- Popup de félicitations -->
-  <div class="popup" id="popup">
-    <div class="inner">
-      <h2 class="title">Félicitations 🎁</h2>
-      <p class="subtitle" id="prizeText"></p>
-      <div class="answer-row" style="justify-content:center;">
-        <button class="btn" onclick="document.getElementById('popup').style.display='none'">OK</button>
-      </div>
-    </div>
-  </div>
+const firebaseConfig = {
+  apiKey: "AIzaSyAUzLQK-ueXOslGncKrmqAXpwFtisMdyGI",
+  authDomain: "recompense-du-jour.firebaseapp.com",
+  projectId: "recompense-du-jour",
+  storageBucket: "recompense-du-jour.appspot.com",
+  messagingSenderId: "67482964719",
+  appId: "1:67482964719:web:0c735a559493b1d4ae011a"
+};
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    // ⚙️ Config Firebase (ton projet)
-    const firebaseConfig = {
-      apiKey: "AIzaSyAUzLQK-ueXOslGncKrmqAXpwFtisMdyGI",
-      authDomain: "recompense-du-jour.firebaseapp.com",
-      projectId: "recompense-du-jour",
-      storageBucket: "recompense-du-jour.appspot.com",
-      messagingSenderId: "67482964719",
-      appId: "1:67482964719:web:0c735a559493b1d4ae011a"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+let currentQuestion = null;
+let eleve = null;
 
-    // Utils
-    const params = new URLSearchParams(location.search);
-    const child = params.get("child") || "";
-    const today = new Date().toISOString().split("T")[0];
+function selectProfile(profil) {
+  eleve = profil;
+  sessionStorage.setItem("eleve", profil);
+  document.getElementById("selection").style.display = "none";
+  loadQuestion();
+}
 
-    const welcome = document.getElementById("welcome");
-    const dateInfo = document.getElementById("dateInfo");
-    const questionCard = document.getElementById("questionCard");
-    const qTypeLabel = document.getElementById("qTypeLabel");
-    const qText = document.getElementById("qText");
-    const answerZone = document.getElementById("answerZone");
-    const validateBtn = document.getElementById("validateBtn");
-    const successCard = document.getElementById("successCard");
-    const wheel = document.getElementById("wheel");
-    const spinBtn = document.getElementById("spinBtn");
+async function loadQuestion() {
+  eleve = sessionStorage.getItem("eleve");
+  if (!eleve) {
+    alert("Erreur : profil manquant. Retourne à l’accueil.");
+    window.location.reload();
+    return;
+  }
 
-    let questionData = null;
-    let surprises = ["Bonbon virtuel 🍬","5 minutes de jeu 🎮","Choisir le dessert 🍰","Autocollant ⭐","Danse rigolote 💃","Blague secrète 😂","Point bonus 🟡","Carte privilège 🎟️","Histoire au choix 📖","High five spécial ✋"];
+  try {
+    const q = query(
+      collection(db, "questions"),
+      where("eleve", "==", eleve),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
 
-    // Init UI
-    dateInfo.textContent = "Date : " + today;
-    if (!child) {
-      welcome.textContent = "Erreur : profil manquant. Retourne à l’accueil.";
-    } else {
-      welcome.textContent = "Salut " + child + " 👋";
-      init();
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      document.getElementById("log").innerText = "⚠️ Aucune question trouvée pour " + eleve;
+      return;
     }
 
-    async function init() {
-      // Empêcher 2e tentative dans la journée
-      const respId = `${child}_${today}`;
-      const respSnap = await getDoc(doc(db, "responses", respId));
-      if (respSnap.exists()) {
-        questionCard.style.display = "none";
-        successCard.style.display = "none";
-        alert("Tu as déjà joué aujourd'hui. Reviens demain !");
-        return;
-      }
+    currentQuestion = snap.docs[0].data();
+    showQuestion();
+  } catch(e) {
+    document.getElementById("log").innerText = "Erreur Firebase: " + e.message;
+    console.error(e);
+  }
+}
 
-      // Charger question du jour
-      const qSnap = await getDoc(doc(db, "questions", child));
-      if (!qSnap.exists()) {
-        alert("Pas de question définie pour aujourd’hui.");
-        return;
-      }
-      questionData = qSnap.data();
+function showQuestion() {
+  document.getElementById("questionSection").style.display = "block";
+  const qDiv = document.getElementById("questionText");
+  const input = document.getElementById("answerInput");
+  input.value = "";
 
-      // Optionnel : vérifier la date si tu veux forcer par jour
-      // if (questionData.date !== today) { ... }
+  qDiv.innerHTML = `<strong>${currentQuestion.titre}</strong><br>${currentQuestion.texte}`;
 
-      // Charger surprises personnalisées si dispo
-      const sSnap = await getDoc(doc(db, "surprises", child));
-      if (sSnap.exists() && Array.isArray(sSnap.data().items) && sSnap.data().items.length) {
-        surprises = sSnap.data().items.slice(0,10);
-      }
+  if(currentQuestion.type === "ouiNon") {
+    input.placeholder = "Réponds 'oui' ou 'non'";
+  } else if(currentQuestion.type === "phrase") {
+    input.placeholder = "Écris la phrase exacte";
+  } else if(currentQuestion.type === "nombre") {
+    input.placeholder = "Écris le nombre correct";
+  }
+}
 
-      // Afficher l’UI de réponse selon le type
-      renderQuestionUI();
-    }
+function submitAnswer() {
+  const answer = document.getElementById("answerInput").value.trim().toLowerCase();
+  const correct = currentQuestion.bonneReponse.trim().toLowerCase();
 
-    function renderQuestionUI() {
-      questionCard.style.display = "block";
-      const type = questionData.type;
-      qText.textContent = questionData.question || "";
-      qTypeLabel.textContent = type === "oui_non" ? "Type : Oui / Non"
-                           : type === "phrase"  ? "Type : Phrase exacte"
-                           : "Type : Nombre";
+  if(answer === "") {
+    alert("Merci de répondre !");
+    return;
+  }
 
-      answerZone.innerHTML = "";
+  if(answer === correct) {
+    startRoulette();
+  } else {
+    alert("❌ Ce n'est pas la bonne réponse. Essaie encore !");
+  }
+}
 
-      if (type === "oui_non") {
-        const btnOui = document.createElement("button");
-        btnOui.className = "btn";
-        btnOui.textContent = "Oui";
-        btnOui.dataset.value = "oui";
+function startRoulette() {
+  const rouletteDiv = document.getElementById("roulette");
+  const surprises = ["🎁 Chocolat", "🍎 Pomme", "🍌 Banane", "🍭 Bonbon", "🎨 Crayons", "📚 Mini-livre", "🎲 Mini-jeu", "🖍️ Feutres", "🎵 Sonnerie", "🏅 Sticker"];
+  let count = 0;
+  rouletteDiv.innerText = "🎉 Bravo ! La roulette tourne...";
 
-        const btnNon = document.createElement("button");
-        btnNon.className = "btn alt";
-        btnNon.textContent = "Non";
-        btnNon.dataset.value = "non";
+  const interval = setInterval(() => {
+    rouletteDiv.innerText = "🎉 Surprise : " + surprises[count % surprises.length];
+    count++;
+  }, 100);
 
-        [btnOui, btnNon].forEach(b=>{
-          b.onclick = ()=> {
-            document.querySelectorAll(".answer-row .btn").forEach(x=> x.classList.remove("selected"));
-            b.classList.add("selected");
-            b.style.filter="brightness(1.1)";
-          };
-        });
-        answerZone.appendChild(btnOui);
-        answerZone.appendChild(btnNon);
-      } else if (type === "phrase") {
-        const inp = document.createElement("input");
-        inp.className = "input";
-        inp.id = "answerInput";
-        inp.placeholder = "Écris la phrase ici";
-        inp.autocomplete = "off";
-        answerZone.appendChild(inp);
-      } else if (type === "nombre") {
-        const inp = document.createElement("input");
-        inp.className = "input";
-        inp.id = "answerInput";
-        inp.type = "number";
-        inp.inputMode = "numeric";
-        inp.placeholder = "Entre le nombre";
-        answerZone.appendChild(inp);
-      }
-    }
+  setTimeout(() => {
+    clearInterval(interval);
+    const final = surprises[Math.floor(Math.random()*surprises.length)];
+    rouletteDiv.innerText = "🎉 Félicitations ! Ta surprise : " + final;
+  }, 2000);
+}
+</script>
 
-    validateBtn.onclick = verifyAnswer;
-
-    async function verifyAnswer() {
-      const type = questionData.type;
-      const accepted = Array.isArray(questionData.answers) ? questionData.answers : [];
-
-      let userAns = "";
-      if (type === "oui_non") {
-        const sel = document.querySelector(".answer-row .btn.selected");
-        if (!sel) { alert("Choisis oui ou non."); return; }
-        userAns = sel.dataset.value;
-      } else {
-        const inp = document.getElementById("answerInput");
-        if (!inp || !inp.value.trim()) { alert("Entre ta réponse."); return; }
-        userAns = inp.value.trim();
-      }
-
-      // Normalisation (insensible à la casse pour "phrase")
-      let ok = false;
-      if (type === "phrase") {
-        ok = accepted.some(a => (a||"").toLowerCase().trim() === userAns.toLowerCase().trim());
-      } else if (type === "nombre") {
-        ok = accepted.some(a => String(a).trim() === String(userAns).trim());
-      } else if (type === "oui_non") {
-        ok = accepted.some(a => (a||"").toLowerCase().trim() === userAns.toLowerCase().trim());
-      }
-
-      if (!ok) {
-        alert("❌ Mauvaise réponse. Réessaie demain !");
-        return;
-      }
-
-      // Marquer la journée comme faite
-      const respId = `${child}_${today}`;
-      await setDoc(doc(db, "responses", respId), {
-        child, date: today, at: Date.now(), answer: String(userAns)
-      });
-
-      // Passer à la roulette
-      questionCard.style.display = "none";
-      successCard.style.display = "block";
-    }
-
-    // Roulette
-    spinBtn.onclick = spinWheel;
-
-    function spinWheel() {
-      // Rotation aléatoire + calcul de l’index gagnant
-      const fullTurns = 5 + Math.floor(Math.random()*4); // 5-8 tours
-      const segment = Math.floor(Math.random()*10);      // 0..9
-      const degPerSeg = 360/10;                          // 36°
-      // Pointer en haut (0°). On veut s'arrêter au centre du segment choisi.
-      const targetDeg = 360 - (segment * degPerSeg + degPerSeg/2);
-      const totalDeg = fullTurns*360 + targetDeg;
-
-      wheel.style.transform = `rotate(${totalDeg}deg)`;
-
-      setTimeout(()=>{
-        const prize = surprises[segment] || "Surprise ! 🎁";
-        document.getElementById("prizeText").textContent = prize;
-        document.getElementById("popup").style.display = "flex";
-      }, 3300);
-    }
-  </script>
 </body>
 </html>
