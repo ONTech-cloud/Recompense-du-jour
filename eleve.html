@@ -6,139 +6,67 @@
 <title>Élève - Question du jour</title>
 <style>
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(120deg, #e0f7ff, #cceeff);
+    font-family: Arial, sans-serif;
+    background: #f0f8ff;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    min-height: 100vh;
-    margin: 0;
-    padding-top: 50px;
+    justify-content: center;
+    height: 100vh;
+    margin:0;
   }
-
-  h1 {
-    color: #0077cc;
-    font-size: 2.2em;
-    margin-bottom: 30px;
-  }
-
-  #selection {
-    display: flex;
-    gap: 50px;
-    margin-bottom: 50px;
-  }
-
   .profil-btn {
-    padding: 50px 100px;
-    font-size: 1.7em;
-    border-radius: 40px;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
-    background: linear-gradient(135deg,#6CC1FF,#3A8DFF);
-    color: white;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  }
-
-  .profil-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 25px rgba(0,0,0,0.35);
-  }
-
-  .question-box {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    background: #ffffffdd;
-    padding: 30px;
-    border-radius: 30px;
-    width: 90%;
-    max-width: 650px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    animation: fadeIn 0.5s ease-in-out;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  #questionText {
+    padding: 40px 80px;
+    margin: 20px;
     font-size: 1.5em;
-    color: #005fa3;
-    margin-bottom: 25px;
-    text-align: center;
-  }
-
-  .answer-input, .answer-select {
-    width: 100%;
-    padding: 18px;
-    font-size: 1.3em;
-    border-radius: 20px;
-    border: 2px solid #3A8DFF;
-    outline: none;
-    transition: border 0.3s, box-shadow 0.3s;
-  }
-
-  .answer-input:focus, .answer-select:focus {
-    border-color: #0077cc;
-    box-shadow: 0 0 12px rgba(0,123,255,0.3);
-  }
-
-  .answer-btn {
-    margin-top: 20px;
-    padding: 18px;
-    width: 100%;
-    font-size: 1.4em;
     border-radius: 25px;
     border: none;
-    background: #0077cc;
-    color: white;
     cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: all 0.3s;
+    background: linear-gradient(45deg,#6CC1FF,#3A8DFF);
+    color: white;
   }
-
-  .answer-btn:hover {
-    transform: scale(1.05);
+  .profil-btn:hover {
+    transform: scale(1.1);
     box-shadow: 0 0 20px rgba(0,0,0,0.3);
   }
-
-  .mini-btns {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    margin-top: 15px;
-  }
-
-  .mini-btn {
-    padding: 15px 30px;
+  .question-box {
+    margin-top: 30px;
+    width: 90%;
+    max-width: 600px;
+    padding: 20px;
     border-radius: 20px;
-    border: 2px solid #3A8DFF;
-    background: white;
+    background: #fff;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  }
+  .answer-input, .answer-btn {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 15px;
+    border: 1px solid #ccc;
+    font-size: 1.2em;
+  }
+  .answer-btn {
+    background: #3A8DFF;
+    color: white;
+    border: none;
     cursor: pointer;
     transition: all 0.3s;
   }
-
-  .mini-btn.selected {
-    background: #3A8DFF;
-    color: white;
+  .answer-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
   }
-
   #roulette {
-    margin-top: 30px;
-    font-size: 1.4em;
+    margin-top: 20px;
+    font-size: 1.3em;
     font-weight: bold;
-    color: #0077cc;
-    text-align: center;
-    min-height: 50px;
+    color: #3A8DFF;
   }
-
   #log {
-    margin-top: 15px;
+    margin-top: 10px;
     color: red;
-    font-weight: bold;
-    text-align: center;
   }
 </style>
 </head>
@@ -150,14 +78,9 @@
   <button id="youssefBtn" class="profil-btn">Youssef</button>
 </div>
 
-<div id="questionSection" class="question-box">
+<div id="questionSection" class="question-box" style="display:none;">
   <div id="questionText"></div>
-  <input type="text" id="answerInput" class="answer-input" placeholder="Ta réponse ici" style="display:none;">
-  <select id="answerSelect" class="answer-select" style="display:none;"></select>
-  <div id="miniBtns" class="mini-btns" style="display:none;">
-    <button class="mini-btn" data-value="oui">Oui</button>
-    <button class="mini-btn" data-value="non">Non</button>
-  </div>
+  <input type="text" id="answerInput" class="answer-input" placeholder="Ta réponse ici">
   <button class="answer-btn" id="submitBtn">Valider</button>
   <div id="roulette"></div>
 </div>
@@ -168,7 +91,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Firebase config
+// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAUzLQK-ueXOslGncKrmqAXpwFtisMdyGI",
   authDomain: "recompense-du-jour.firebaseapp.com",
@@ -183,37 +106,51 @@ const db = getFirestore(app);
 
 let currentQuestion = null;
 let eleve = null;
-let surprisesList = [];
 
-// Profil buttons
+// Boutons profils
 document.getElementById("amirBtn").addEventListener("click", () => selectProfile("Amir"));
 document.getElementById("youssefBtn").addEventListener("click", () => selectProfile("Youssef"));
 
-async function selectProfile(profil) {
+function selectProfile(profil) {
   eleve = profil;
   sessionStorage.setItem("eleve", profil);
   document.getElementById("selection").style.display = "none";
-  await loadQuestion();
-  await loadSurprises();
+  loadQuestion();
 }
 
+// Charger la dernière question pour l'élève
 async function loadQuestion() {
   eleve = sessionStorage.getItem("eleve");
-  if (!eleve) { alert("Erreur : profil manquant."); return; }
+  if (!eleve) {
+    alert("Erreur : profil manquant. Retourne à l’accueil.");
+    window.location.reload();
+    return;
+  }
 
   try {
     const snap = await getDocs(collection(db, "questions"));
-    const docsEleve = snap.docs.filter(d => d.id === eleve);
-    if(docsEleve.length === 0) { document.getElementById("log").innerText = "Aucune question pour " + eleve; return; }
+    if (snap.empty) {
+      document.getElementById("log").innerText = "⚠️ Aucune question trouvée";
+      return;
+    }
 
+    // Filtrer côté JS pour le profil (nom du doc)
+    const docsEleve = snap.docs.filter(d => d.id === eleve);
+    if(docsEleve.length === 0) {
+      document.getElementById("log").innerText = "⚠️ Aucune question pour " + eleve;
+      return;
+    }
+
+    // Trier par updatedAt
     docsEleve.sort((a,b) => (a.data().updatedAt || 0) - (b.data().updatedAt || 0));
+
     const d = docsEleve[docsEleve.length-1];
     const data = d.data();
 
     currentQuestion = {
       titre: data.question,
       texte: data.question,
-      type: data.type,
+      type: data.type === "oui_non" ? "ouiNon" : data.type,
       bonneReponse: data.answers[0],
       eleve: d.id,
       createdAt: data.updatedAt
@@ -221,60 +158,40 @@ async function loadQuestion() {
 
     showQuestion();
 
-  } catch(e) { console.error(e); document.getElementById("log").innerText = "Erreur Firebase: " + e.message; }
-}
-
-async function loadSurprises() {
-  surprisesList = [];
-  try {
-    const snap = await getDocs(collection(db, "surprises"));
-    snap.docs.forEach(d => { const data = d.data(); if(data.nom) surprisesList.push(data.nom); });
-  } catch(e) { console.error("Erreur chargement surprises: ", e); }
+  } catch(e) {
+    document.getElementById("log").innerText = "Erreur Firebase: " + e.message;
+    console.error(e);
+  }
 }
 
 function showQuestion() {
+  document.getElementById("questionSection").style.display = "block";
   const qDiv = document.getElementById("questionText");
   const input = document.getElementById("answerInput");
-  const select = document.getElementById("answerSelect");
-  const miniBtnsDiv = document.getElementById("miniBtns");
-
-  input.style.display = "none";
-  select.style.display = "none";
-  miniBtnsDiv.style.display = "none";
+  input.value = "";
 
   qDiv.innerHTML = `<strong>${currentQuestion.titre}</strong><br>${currentQuestion.texte}`;
-  if(currentQuestion.type === "oui_non") {
-    miniBtnsDiv.style.display = "flex";
-    miniBtnsDiv.querySelectorAll(".mini-btn").forEach(b => b.classList.remove("selected"));
-    miniBtnsDiv.querySelectorAll(".mini-btn").forEach(b => b.onclick = () => {
-      miniBtnsDiv.querySelectorAll(".mini-btn").forEach(btn=>btn.classList.remove("selected"));
-      b.classList.add("selected");
-    });
+
+  if(currentQuestion.type === "ouiNon") {
+    input.placeholder = "Réponds 'oui' ou 'non'";
   } else if(currentQuestion.type === "phrase") {
-    input.style.display = "block";
     input.placeholder = "Écris la phrase exacte";
-    input.value = "";
   } else if(currentQuestion.type === "nombre") {
-    select.style.display = "block";
-    select.innerHTML = "";
-    for(let i=0;i<=100;i++) select.innerHTML += `<option value="${i}">${i}</option>`;
+    input.placeholder = "Écris le nombre correct";
   }
 }
 
 // Validation
 document.getElementById("submitBtn").addEventListener("click", () => {
-  let answer;
-  if(currentQuestion.type==="oui_non"){
-    const selected = document.querySelector(".mini-btn.selected");
-    if(!selected){ alert("Sélectionne Oui ou Non"); return; }
-    answer = selected.dataset.value;
-  } else if(currentQuestion.type==="phrase"){
-    answer = document.getElementById("answerInput").value.trim();
-  } else if(currentQuestion.type==="nombre"){
-    answer = document.getElementById("answerSelect").value;
+  const answer = document.getElementById("answerInput").value.trim().toLowerCase();
+  const correct = currentQuestion.bonneReponse.trim().toLowerCase();
+
+  if(answer === "") {
+    alert("Merci de répondre !");
+    return;
   }
 
-  if(answer.trim().toLowerCase() === currentQuestion.bonneReponse.trim().toLowerCase()) {
+  if(answer === correct) {
     startRoulette();
   } else {
     alert("❌ Ce n'est pas la bonne réponse. Essaie encore !");
@@ -284,19 +201,18 @@ document.getElementById("submitBtn").addEventListener("click", () => {
 // Roulette animée
 function startRoulette() {
   const rouletteDiv = document.getElementById("roulette");
-  if(surprisesList.length === 0) { rouletteDiv.innerText = "🎉 Aucune surprise disponible"; return; }
-
+  const surprises = ["🎁 Chocolat", "🍎 Pomme", "🍌 Banane", "🍭 Bonbon", "🎨 Crayons", "📚 Mini-livre", "🎲 Mini-jeu", "🖍️ Feutres", "🎵 Sonnerie", "🏅 Sticker"];
   let count = 0;
-  rouletteDiv.innerText = "🎉 La roulette tourne...";
+  rouletteDiv.innerText = "🎉 Bravo ! La roulette tourne...";
 
   const interval = setInterval(() => {
-    rouletteDiv.innerText = "🎉 Surprise : " + surprisesList[count % surprisesList.length];
+    rouletteDiv.innerText = "🎉 Surprise : " + surprises[count % surprises.length];
     count++;
   }, 100);
 
   setTimeout(() => {
     clearInterval(interval);
-    const final = surprisesList[Math.floor(Math.random()*surprisesList.length)];
+    const final = surprises[Math.floor(Math.random()*surprises.length)];
     rouletteDiv.innerText = "🎉 Félicitations ! Ta surprise : " + final;
   }, 2000);
 }
