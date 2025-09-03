@@ -1,0 +1,34 @@
+<button onclick="testFirebase()">Test Firebase</button>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAUzLQK-ueXOslGncKrmqAXpwFtisMdyGI",
+    authDomain: "recompense-du-jour.firebaseapp.com",
+    projectId: "recompense-du-jour",
+    storageBucket: "recompense-du-jour.appspot.com",
+    messagingSenderId: "67482964719",
+    appId: "1:67482964719:web:0c735a559493b1d4ae011a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  async function testFirebase() {
+    try {
+      await addDoc(collection(db, "questions"), {
+        eleve: "Test",
+        type: "ouiNon",
+        titre: "Test Firebase",
+        texte: "Est-ce que ça marche ?",
+        bonneReponse: "oui",
+        createdAt: serverTimestamp()
+      });
+      alert("✅ Firebase fonctionne !");
+    } catch (e) {
+      alert("❌ Erreur Firebase : " + e.message);
+      console.error(e);
+    }
+  }
+</script>
