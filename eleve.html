@@ -127,10 +127,10 @@ async function selectProfile(profil){
   sessionStorage.setItem("eleve", profil);
   document.getElementById("selection").style.display = "none";
   await loadQuestion();
-  await loadSurprises(); // charge la liste pour la roulette
+  await loadSurprises();
 }
 
-// Charge la question depuis questions/{eleve}
+// Charge la question depuis Firestore
 async function loadQuestion(){
   try{
     const snap = await getDoc(doc(db, "questions", eleve));
@@ -142,14 +142,16 @@ async function loadQuestion(){
     currentQuestion = {
       titre: data.titre || data.question || "Question du jour",
       texte: data.texte || data.question || "",
-      type: normalizeType(data.type), // "oui_non" | "phrase" | "nombre"
-      // bonneReponse: priorité à bonneReponse, sinon 1er élément de answers, sinon reponse/solution
+      type: normalizeType(data.type),
       bonneReponse: (data.bonneReponse ?? (Array.isArray(data.answers)?data.answers[0]:undefined) ?? data.reponse ?? data.solution ?? "").toString(),
-      options: Array.isArray(data.answers) ? data.answers.map(x=>x.toString()) : null
+      options: Array.isArray(data.answers) ? data.answers.map(x=>x.toString()) : null,
+      min: data.min,
+      max: data.max
     };
     showQuestion();
   }catch(e){
-    console.error(e); setLog("Erreur Firebase (question) : " + e.message);
+    console.error(e);
+    setLog("Erreur Firebase (question) : " + e.message);
   }
 }
 
@@ -161,32 +163,28 @@ function normalizeType(t){
   return "phrase";
 }
 
-// Charge surprises pour l’élève (essaie 3 structures)
+// Charge surprises
 async function loadSurprises(){
   surprisesList = [];
   try{
-    // 1) surprises/{eleve}/liste/*
     const sub = await getDocs(collection(db, "surprises", eleve, "liste"));
     sub.forEach(d=>{
       const v = d.data();
       const name = v?.nom ?? v?.name ?? v?.titre ?? (typeof v==="string"?v:undefined);
       if(name) surprisesList.push(name.toString());
     });
-    if(surprisesList.length>0){ console.log("Surprises source: surprises/"+eleve+"/liste"); return; }
+    if(surprisesList.length>0) return;
 
-    // 2) surprises/{eleve} avec tableau
     const docSnap = await getDoc(doc(db, "surprises", eleve));
     if(docSnap.exists()){
       const v = docSnap.data();
       const arr = Array.isArray(v?.liste)?v.liste : (Array.isArray(v?.items)?v.items : (Array.isArray(v?.surprises)?v.surprises : null));
       if(arr && arr.length){
         surprisesList = arr.map(x=> (typeof x==="string")?x : (x?.nom ?? x?.name ?? x?.titre ?? "") ).filter(Boolean).map(String);
-        console.log("Surprises source: surprises/"+eleve+" (array field)");
         return;
       }
     }
 
-    // 3) surprises top-level filtrées par champ eleve
     const top = await getDocs(collection(db,"surprises"));
     const picked = [];
     top.forEach(d=>{
@@ -197,23 +195,20 @@ async function loadSurprises(){
         if(Array.isArray(v?.liste)) v.liste.forEach(x=>picked.push(String(x)));
       }
     });
-    if(picked.length){ surprisesList = picked; console.log("Surprises source: surprises (filtered by eleve)"); return; }
+    if(picked.length){ surprisesList = picked; return; }
 
-    // 3bis) dernier recours : toutes les surprises
     top.forEach(d=>{ const v=d.data(); const name = v?.nom ?? v?.name ?? v?.titre; if(name) surprisesList.push(name.toString()); });
-    if(surprisesList.length){ console.log("Surprises source: surprises (all)"); }
   }catch(e){
     console.error("Erreur chargement surprises:", e);
     setLog("Erreur Firebase (surprises) : " + e.message);
   }
 }
 
-// Affiche la question + champs selon type
+// Affiche la question
 function showQuestion(){
   document.getElementById("questionSection").style.display = "flex";
   document.getElementById("questionText").innerHTML = `<strong>${escapeHtml(currentQuestion.titre)}</strong><br>${escapeHtml(currentQuestion.texte)}`;
 
-  // reset vues
   const inp = document.getElementById("answerInput");
   const sel = document.getElementById("answerSelect");
   const yn  = document.getElementById("miniBtns");
@@ -222,24 +217,25 @@ function showQuestion(){
 
   if(currentQuestion.type==="oui_non"){
     yn.style.display="flex";
-    // déselection
     document.querySelectorAll(".mini-btn").forEach(b=>b.classList.remove("selected"));
   }else if(currentQuestion.type==="nombre"){
     sel.style.display="block";
-    // Si Firestore fournit un intervalle min/max, on l’utilise
-      let values = [];
-        if (currentQuestion.min !== undefined && currentQuestion.max !== undefined) {
-      values = Array.from(
-        {length: currentQuestion.max - currentQuestion.min + 1},
-        (_,i)=> String(currentQuestion.min + i)
-          );
-  } else {
-  // Sinon on propose une liste générique 0 à 20
-  values = Array.from({length:21},(_,i)=> i.toString());
-}
+    let values = [];
+    if (currentQuestion.min !== undefined && currentQuestion.max !== undefined) {
+      values = Array.from({length: currentQuestion.max - currentQuestion.min + 1}, (_,i)=> String(currentQuestion.min + i));
+    } else if (currentQuestion.options && currentQuestion.options.length){
+      values = currentQuestion.options;
+    } else {
+      values = Array.from({length:21},(_,i)=> i.toString());
+    }
+    sel.innerHTML = values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+  }else{
+    inp.style.display="block";
+    inp.placeholder="Écris la phrase exacte";
+  }
 }
 
-// Sélection Oui/Non (rectangle arrondi divisé en deux)
+// Oui/Non sélection
 document.querySelectorAll(".mini-btn").forEach(btn=>{
   btn.addEventListener("click", ()=>{
     document.querySelectorAll(".mini-btn").forEach(b=>b.classList.remove("selected"));
@@ -270,7 +266,7 @@ document.getElementById("submitBtn").addEventListener("click", ()=>{
   else{ alert("❌ Mauvaise réponse, essaie encore !"); }
 });
 
-// Roulette animée (rotation + défilement du texte)
+// Roulette
 function startRoulette(){
   const wrap = document.getElementById("roulette");
   if(!surprisesList || surprisesList.length===0){
@@ -291,16 +287,12 @@ function startRoulette(){
     clearInterval(tick);
     wrap.classList.remove("spinning");
     const final = surprisesList[Math.floor(Math.random()*surprisesList.length)];
-    wrap.innerHTML = `<span> : ${escapeHtml(final)}</span>`;
+    wrap.innerHTML = `<span>🎁 : ${escapeHtml(final)}</span>`;
   }, duration);
 }
 
 function setLog(msg){ document.getElementById("log").textContent = msg; }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
-
-/* NOTE sur l'erreur console:
-   "A listener indicated an asynchronous response..." vient souvent d'une extension navigateur.
-   Si vous la voyez, testez en navigation privée / sans extensions : ce n'est PAS bloquant pour notre code. */
 </script>
 </body>
 </html>
