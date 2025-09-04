@@ -11,36 +11,33 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
     min-height: 100vh;
     margin: 0;
-    padding-top: 50px;
+    padding-top: 40px;
   }
 
   h1 {
     color: #0077cc;
-    font-size: 2.2em;
+    font-size: 2em;
     margin-bottom: 30px;
   }
 
   #selection {
     display: flex;
-    gap: 50px;
-    margin-bottom: 50px;
+    gap: 40px;
+    margin-bottom: 40px;
   }
 
   .profil-btn {
-    padding: 50px 100px;
-    font-size: 1.7em;
-    border-radius: 40px;
+    padding: 40px 80px;
+    font-size: 1.5em;
+    border-radius: 30px;
     border: none;
     cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
     background: linear-gradient(135deg,#6CC1FF,#3A8DFF);
     color: white;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: transform 0.3s, box-shadow 0.3s;
   }
-
   .profil-btn:hover {
     transform: scale(1.1);
     box-shadow: 0 0 25px rgba(0,0,0,0.35);
@@ -50,47 +47,69 @@
     display: none;
     flex-direction: column;
     align-items: center;
-    background: #ffffffdd;
-    padding: 30px;
-    border-radius: 30px;
+    background: #fff;
+    padding: 25px;
+    border-radius: 25px;
     width: 90%;
-    max-width: 650px;
+    max-width: 600px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     animation: fadeIn 0.5s ease-in-out;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
+    from { opacity: 0; transform: translateY(-15px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
   #questionText {
-    font-size: 1.5em;
+    font-size: 1.4em;
     color: #005fa3;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     text-align: center;
   }
 
-  .answer-input {
+  .answer-input, .answer-select {
     width: 100%;
-    padding: 18px;
-    font-size: 1.3em;
+    padding: 15px;
+    font-size: 1.2em;
     border-radius: 20px;
     border: 2px solid #3A8DFF;
     outline: none;
-    transition: border 0.3s, box-shadow 0.3s;
+    margin-top: 10px;
   }
 
-  .answer-input:focus {
-    border-color: #0077cc;
-    box-shadow: 0 0 12px rgba(0,123,255,0.3);
+  .answer-select {
+    background: white;
+    cursor: pointer;
+  }
+
+  .mini-btns {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+    gap: 20px;
+  }
+
+  .mini-btn {
+    flex: 1;
+    padding: 15px 20px;
+    border-radius: 20px;
+    border: 2px solid #3A8DFF;
+    background: white;
+    cursor: pointer;
+    font-size: 1.2em;
+    transition: all 0.3s;
+  }
+  .mini-btn.selected {
+    background: #3A8DFF;
+    color: white;
   }
 
   .answer-btn {
     margin-top: 20px;
-    padding: 18px;
+    padding: 15px;
     width: 100%;
-    font-size: 1.4em;
+    font-size: 1.2em;
     border-radius: 25px;
     border: none;
     background: #0077cc;
@@ -98,7 +117,6 @@
     cursor: pointer;
     transition: transform 0.3s, box-shadow 0.3s;
   }
-
   .answer-btn:hover {
     transform: scale(1.05);
     box-shadow: 0 0 20px rgba(0,0,0,0.3);
@@ -106,11 +124,26 @@
 
   #roulette {
     margin-top: 30px;
-    font-size: 1.4em;
+    width: 220px;
+    height: 220px;
+    border: 8px solid #0077cc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3em;
     font-weight: bold;
     color: #0077cc;
     text-align: center;
-    min-height: 50px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #roulette span {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    transition: transform 0.5s;
   }
 
   #log {
@@ -131,9 +164,17 @@
 
 <div id="questionSection" class="question-box">
   <div id="questionText"></div>
-  <input type="text" id="answerInput" class="answer-input" placeholder="Ta réponse ici">
+
+  <input type="text" id="answerInput" class="answer-input" placeholder="Ta réponse ici" style="display:none;">
+  <select id="answerSelect" class="answer-select" style="display:none;"></select>
+
+  <div id="miniBtns" class="mini-btns" style="display:none;">
+    <button class="mini-btn" data-value="oui">Oui</button>
+    <button class="mini-btn" data-value="non">Non</button>
+  </div>
+
   <button class="answer-btn" id="submitBtn">Valider</button>
-  <div id="roulette"></div>
+  <div id="roulette"><span>🎁</span></div>
 </div>
 
 <div id="log"></div>
@@ -159,7 +200,7 @@ let currentQuestion = null;
 let eleve = null;
 let surprisesList = [];
 
-// Profil buttons
+// Profil selection
 document.getElementById("amirBtn").addEventListener("click", () => selectProfile("Amir"));
 document.getElementById("youssefBtn").addEventListener("click", () => selectProfile("Youssef"));
 
@@ -173,10 +214,7 @@ async function selectProfile(profil) {
 
 async function loadQuestion() {
   eleve = sessionStorage.getItem("eleve");
-  if (!eleve) {
-    alert("Erreur : profil manquant.");
-    return;
-  }
+  if (!eleve) return;
 
   try {
     const snap = await getDocs(collection(db, "questions"));
@@ -185,7 +223,6 @@ async function loadQuestion() {
       document.getElementById("log").innerText = "⚠️ Aucune question pour " + eleve;
       return;
     }
-
     docsEleve.sort((a,b) => (a.data().updatedAt || 0) - (b.data().updatedAt || 0));
     const d = docsEleve[docsEleve.length-1];
     const data = d.data();
@@ -193,87 +230,98 @@ async function loadQuestion() {
     currentQuestion = {
       titre: data.question,
       texte: data.question,
-      type: data.type === "oui_non" ? "ouiNon" : data.type,
+      type: data.type,
       bonneReponse: data.answers[0],
       eleve: d.id,
       createdAt: data.updatedAt
     };
-
     showQuestion();
 
   } catch(e) {
-    document.getElementById("log").innerText = "Erreur Firebase: " + e.message;
     console.error(e);
+    document.getElementById("log").innerText = "Erreur Firebase: " + e.message;
   }
 }
 
 async function loadSurprises() {
   surprisesList = [];
   try {
-    const snap = await getDocs(collection(db, "surprises"));
-    snap.docs.forEach(d => {
-      const data = d.data();
-      if(data.nom) surprisesList.push(data.nom);
-    });
-  } catch(e) {
-    console.error("Erreur chargement surprises: ", e);
-  }
+    // récupère les surprises spécifiques à l’élève
+    const snap = await getDocs(collection(db, "surprises", eleve, "liste"));
+    snap.docs.forEach(d => { const data = d.data(); if(data.nom) surprisesList.push(data.nom); });
+  } catch(e) { console.error("Erreur chargement surprises: ", e); }
 }
 
 function showQuestion() {
   document.getElementById("questionSection").style.display = "flex";
-  const qDiv = document.getElementById("questionText");
-  const input = document.getElementById("answerInput");
-  input.value = "";
+  document.getElementById("questionText").innerHTML = `<strong>${currentQuestion.titre}</strong><br>${currentQuestion.texte}`;
 
-  qDiv.innerHTML = `<strong>${currentQuestion.titre}</strong><br>${currentQuestion.texte}`;
-  if(currentQuestion.type === "ouiNon") {
-    input.placeholder = "Réponds 'oui' ou 'non'";
+  document.getElementById("answerInput").style.display = "none";
+  document.getElementById("answerSelect").style.display = "none";
+  document.getElementById("miniBtns").style.display = "none";
+
+  if(currentQuestion.type === "oui_non") {
+    document.getElementById("miniBtns").style.display = "flex";
   } else if(currentQuestion.type === "phrase") {
+    const input = document.getElementById("answerInput");
+    input.style.display = "block";
+    input.value = "";
     input.placeholder = "Écris la phrase exacte";
   } else if(currentQuestion.type === "nombre") {
-    input.placeholder = "Écris le nombre correct";
+    const select = document.getElementById("answerSelect");
+    select.style.display = "block";
+    select.innerHTML = "";
+    for(let i=0;i<=50;i++) select.innerHTML += `<option value="${i}">${i}</option>`;
   }
 }
 
 // Validation
 document.getElementById("submitBtn").addEventListener("click", () => {
-  const answer = document.getElementById("answerInput").value.trim().toLowerCase();
-  const correct = currentQuestion.bonneReponse.trim().toLowerCase();
-
-  if(answer === "") {
-    alert("Merci de répondre !");
-    return;
+  let answer;
+  if(currentQuestion.type==="oui_non"){
+    const selected = document.querySelector(".mini-btn.selected");
+    if(!selected){ alert("Choisis Oui ou Non"); return; }
+    answer = selected.dataset.value;
+  } else if(currentQuestion.type==="phrase"){
+    answer = document.getElementById("answerInput").value.trim();
+  } else if(currentQuestion.type==="nombre"){
+    answer = document.getElementById("answerSelect").value;
   }
 
-  if(answer === correct) {
+  if(answer.trim().toLowerCase() === currentQuestion.bonneReponse.trim().toLowerCase()) {
     startRoulette();
   } else {
-    alert("❌ Ce n'est pas la bonne réponse. Essaie encore !");
+    alert("❌ Mauvaise réponse !");
   }
 });
 
-// Roulette animée avec surprises de Firestore
+// Boutons Oui/Non
+document.querySelectorAll(".mini-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".mini-btn").forEach(b=>b.classList.remove("selected"));
+    btn.classList.add("selected");
+  });
+});
+
+// Roulette animée
 function startRoulette() {
   const rouletteDiv = document.getElementById("roulette");
   if(surprisesList.length === 0) {
-    rouletteDiv.innerText = "🎉 Aucune surprise disponible";
+    rouletteDiv.innerHTML = "<span>🎉 Aucune surprise disponible</span>";
     return;
   }
 
-  let count = 0;
-  rouletteDiv.innerText = "🎉 La roulette tourne...";
+  let i = 0;
+  const spin = setInterval(()=>{
+    rouletteDiv.innerHTML = `<span>${surprisesList[i % surprisesList.length]}</span>`;
+    i++;
+  },150);
 
-  const interval = setInterval(() => {
-    rouletteDiv.innerText = "🎉 Surprise : " + surprisesList[count % surprisesList.length];
-    count++;
-  }, 100);
-
-  setTimeout(() => {
-    clearInterval(interval);
+  setTimeout(()=>{
+    clearInterval(spin);
     const final = surprisesList[Math.floor(Math.random()*surprisesList.length)];
-    rouletteDiv.innerText = "🎉 Félicitations ! Ta surprise : " + final;
-  }, 2000);
+    rouletteDiv.innerHTML = `<span>🎉 Bravo ! Tu gagnes : ${final}</span>`;
+  }, 2500);
 }
 </script>
 
