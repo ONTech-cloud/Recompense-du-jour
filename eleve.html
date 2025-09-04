@@ -207,8 +207,10 @@ async function loadSurprises(){
 // Affiche la question
 function showQuestion(){
   document.getElementById("questionSection").style.display = "flex";
-  document.getElementById("questionText").innerHTML = `<strong>${escapeHtml(currentQuestion.titre)}</strong><br>${escapeHtml(currentQuestion.texte)}`;
+  document.getElementById("questionText").innerHTML =
+    `<strong>${escapeHtml(currentQuestion.titre)}</strong><br>${escapeHtml(currentQuestion.texte)}`;
 
+  // reset vues
   const inp = document.getElementById("answerInput");
   const sel = document.getElementById("answerSelect");
   const yn  = document.getElementById("miniBtns");
@@ -218,22 +220,38 @@ function showQuestion(){
   if(currentQuestion.type==="oui_non"){
     yn.style.display="flex";
     document.querySelectorAll(".mini-btn").forEach(b=>b.classList.remove("selected"));
+
   }else if(currentQuestion.type==="nombre"){
     sel.style.display="block";
+
     let values = [];
+    // Si Firestore fournit un min et max → construit l’intervalle
     if (currentQuestion.min !== undefined && currentQuestion.max !== undefined) {
-      values = Array.from({length: currentQuestion.max - currentQuestion.min + 1}, (_,i)=> String(currentQuestion.min + i));
-    } else if (currentQuestion.options && currentQuestion.options.length){
+      values = Array.from(
+        {length: currentQuestion.max - currentQuestion.min + 1},
+        (_,i)=> String(currentQuestion.min + i)
+      );
+    } 
+    // Sinon si Firestore fournit un tableau d’answers → utilise-le
+    else if (currentQuestion.options && currentQuestion.options.length) {
       values = currentQuestion.options;
-    } else {
+    } 
+    // Sinon → par défaut 0 à 20
+    else {
       values = Array.from({length:21},(_,i)=> i.toString());
     }
-    sel.innerHTML = values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
-  }else{
+
+    // Injecte les options dans le <select>
+    sel.innerHTML = values.map(v => 
+      `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`
+    ).join("");
+  } 
+  else {
+    // phrase libre
     inp.style.display="block";
-    inp.placeholder="Écris la phrase exacte";
   }
 }
+
 
 // Oui/Non sélection
 document.querySelectorAll(".mini-btn").forEach(btn=>{
