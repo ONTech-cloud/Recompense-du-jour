@@ -271,7 +271,7 @@ function startRoulette(){
   const wrap = document.getElementById("roulette");
   if(!surprisesList || surprisesList.length===0){
     wrap.classList.remove("spinning");
-    wrap.innerHTML = `<span>🎉 Aucune surprise disponible</span>`;
+    wrap.innerHTML = `<span>Aucune surprise disponible</span>`;
     return;
   }
 
@@ -287,7 +287,7 @@ function startRoulette(){
     clearInterval(tick);
     wrap.classList.remove("spinning");
     const final = surprisesList[Math.floor(Math.random()*surprisesList.length)];
-    wrap.innerHTML = `<span>🎉 Bravo ! Tu gagnes : ${escapeHtml(final)}</span>`;
+    wrap.innerHTML = `<span> : ${escapeHtml(final)}</span>`;
   }, duration);
 }
 
