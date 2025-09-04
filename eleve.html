@@ -226,13 +226,17 @@ function showQuestion(){
     document.querySelectorAll(".mini-btn").forEach(b=>b.classList.remove("selected"));
   }else if(currentQuestion.type==="nombre"){
     sel.style.display="block";
-    // si des options sont fournies, on les utilise; sinon 0..50
-    const values = (currentQuestion.options && currentQuestion.options.length) ? currentQuestion.options : Array.from({length:51},(_,i)=>i.toString());
-    sel.innerHTML = values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
-  }else{ // phrase (par défaut)
-    inp.style.display="block";
-    inp.placeholder="Écris la phrase exacte";
-  }
+    // Si Firestore fournit un intervalle min/max, on l’utilise
+      let values = [];
+        if (currentQuestion.min !== undefined && currentQuestion.max !== undefined) {
+      values = Array.from(
+        {length: currentQuestion.max - currentQuestion.min + 1},
+        (_,i)=> String(currentQuestion.min + i)
+          );
+  } else {
+  // Sinon on propose une liste générique 0 à 20
+  values = Array.from({length:21},(_,i)=> i.toString());
+}
 }
 
 // Sélection Oui/Non (rectangle arrondi divisé en deux)
