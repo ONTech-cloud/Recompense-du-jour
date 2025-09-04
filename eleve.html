@@ -144,9 +144,7 @@ async function loadQuestion(){
       texte: data.texte || data.question || "",
       type: normalizeType(data.type),
       bonneReponse: (data.bonneReponse ?? (Array.isArray(data.answers)?data.answers[0]:undefined) ?? data.reponse ?? data.solution ?? "").toString(),
-      options: Array.isArray(data.answers) ? data.answers.map(x=>x.toString()) : null,
-      min: data.min,
-      max: data.max
+      options: Array.isArray(data.answers) ? data.answers.map(x=>x.toString()) : null
     };
     showQuestion();
   }catch(e){
@@ -224,24 +222,9 @@ function showQuestion(){
   }else if(currentQuestion.type==="nombre"){
     sel.style.display="block";
 
-    let values = [];
-    // Si Firestore fournit un min et max → construit l’intervalle
-    if (currentQuestion.min !== undefined && currentQuestion.max !== undefined) {
-      values = Array.from(
-        {length: currentQuestion.max - currentQuestion.min + 1},
-        (_,i)=> String(currentQuestion.min + i)
-      );
-    } 
-    // Sinon si Firestore fournit un tableau d’answers → utilise-le
-    else if (currentQuestion.options && currentQuestion.options.length) {
-      values = currentQuestion.options;
-    } 
-    // Sinon → par défaut 0 à 20
-    else {
-      values = Array.from({length:21},(_,i)=> i.toString());
-    }
+    // Menu déroulant toujours 0 → 100
+    const values = Array.from({length:101},(_,i)=> i.toString());
 
-    // Injecte les options dans le <select>
     sel.innerHTML = values.map(v => 
       `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`
     ).join("");
@@ -251,7 +234,6 @@ function showQuestion(){
     inp.style.display="block";
   }
 }
-
 
 // Oui/Non sélection
 document.querySelectorAll(".mini-btn").forEach(btn=>{
